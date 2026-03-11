@@ -1,0 +1,1677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>The Mirror</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Cinzel+Decorative:wght@400;700&family=IM+Fell+English:ital@0;1&family=Caveat:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --aubergine: #2D0A3F;
+    --aubergine-mid: #3D1254;
+    --dusty-rose: #8B2252;
+    --dusty-rose-mid: #7A1E48;
+    --rose-gold: #E8C49A;
+    --rose-gold-light: #F5D9C0;
+    --rose-gold-bright: #FFF0E0;
+    --gold: #F0D090;
+    --gold-light: #FAE8B0;
+    --text-dim: rgba(232,196,154,0.75);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    width: 100vw; height: 100vh;
+    overflow: hidden;
+    font-family: 'Cormorant Garamond', serif;
+    color: var(--rose-gold-light);
+  }
+
+  body {
+    background: radial-gradient(ellipse 120% 100% at 40% 40%, var(--dusty-rose) 0%, var(--dusty-rose-mid) 22%, var(--aubergine-mid) 55%, var(--aubergine) 100%);
+    position: relative;
+  }
+
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(ellipse 55% 70% at 20% 50%, rgba(139,34,82,0.3) 0%, transparent 65%),
+      radial-gradient(ellipse 50% 50% at 0% 0%, rgba(45,10,63,0.85) 0%, transparent 50%),
+      radial-gradient(ellipse 45% 55% at 100% 100%, rgba(45,10,63,0.75) 0%, transparent 50%);
+  }
+
+  #sparkles { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
+
+  /* ══════════════════════════════
+     MASTER 16:9 GRID
+     3 columns × 3 rows
+     Col widths:  2fr  |  1fr  |  1fr
+     Row heights: 2fr  |  1fr  |  1fr
+  ══════════════════════════════ */
+  .mirror-grid {
+    position: relative;
+    z-index: 10;
+    width: 100vw; height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr 1fr;
+    animation: fadeIn 2s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* ── Cell borders ── */
+  .cell {
+    border: 1px solid rgba(201,149,108,0.14);
+    position: relative;
+    overflow: hidden;
+    padding: 8px 10px;
+    min-width: 0;
+    min-height: 0;
+  }
+  /* Corner ornaments */
+  .cell::before, .cell::after {
+    content: '✦';
+    position: absolute;
+    color: rgba(201,149,108,0.28);
+    font-size: 7px;
+    line-height: 1;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .cell::before { top: 5px; left: 7px; }
+  .cell::after  { bottom: 5px; right: 7px; }
+
+  .widget-label {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(7px, 1vh, 11px);
+    letter-spacing: 3px;
+    color: var(--gold);
+    opacity: 0.6;
+    text-transform: uppercase;
+    display: block;
+    margin-bottom: 3px;
+    flex-shrink: 0;
+  }
+
+  /* ══════════════════════════════
+     CELL A: CLOCK  (col 1, rows 1–2)
+  ══════════════════════════════ */
+  .cell-clock {
+    grid-column: 1; grid-row: 1 / 3;
+    background: rgba(30,5,22,0.35);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 20px;
+  }
+  .clock-time {
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 300;
+    font-size: clamp(40px, 7vw, 100px);
+    letter-spacing: 2px;
+    color: var(--gold-light);
+    line-height: 1;
+    text-shadow: 0 0 60px rgba(240,208,144,0.35), 0 0 120px rgba(240,208,144,0.12);
+  }
+  .clock-colon { animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .clock-date {
+    font-family: 'IM Fell English', serif;
+    font-style: italic;
+    font-size: clamp(11px, 1.8vh, 20px);
+    color: var(--rose-gold);
+    margin-top: 6px; letter-spacing: 1px;
+  }
+  .clock-day {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(7px, 1vh, 12px);
+    letter-spacing: 3px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    margin-top: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+
+  /* ══════════════════════════════
+     CELL B: MIRROR SPEAKS  (col 1, row 3)
+  ══════════════════════════════ */
+  .cell-speaks {
+    grid-column: 2; grid-row: 4;
+    background: rgba(45,10,63,0.4);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 8px 16px;
+  }
+  .incantation {
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic; font-weight: 300;
+    font-size: clamp(12px, 2.2vh, 22px);
+    color: var(--rose-gold-bright);
+    text-shadow: 0 0 20px rgba(201,149,108,0.4);
+    letter-spacing: 0.5px; line-height: 1.5;
+    animation: speakPulse 4s ease-in-out infinite;
+    transition: opacity 1s ease;
+  }
+  @keyframes speakPulse {
+    0%,100% { text-shadow: 0 0 20px rgba(201,149,108,0.4), 0 0 40px rgba(201,149,108,0.15); }
+    50%     { text-shadow: 0 0 30px rgba(201,149,108,0.6), 0 0 60px rgba(201,149,108,0.25); }
+  }
+  .mirror-attribution {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(7px, 0.9vh, 10px); letter-spacing: 3px;
+    color: var(--text-dim); margin-top: 4px;
+    text-transform: uppercase;
+  }
+
+  /* ══════════════════════════════
+     CELL C: DAILY CARD  (col 2, row 1)
+  ══════════════════════════════ */
+  .cell-tarot {
+    grid-column: 3; grid-row: 1 / 3;
+    background: rgba(40,8,28,0.5);
+    display: flex; flex-direction: column;
+    padding: 8px 10px;
+  }
+  .tarot-inner {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .tarot-card-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 6px;
+  }
+  .tarot-scene {
+    perspective: 600px;
+    width: 56px; height: 90px;
+    flex-shrink: 0; cursor: pointer;
+  }
+  .tarot-card {
+    width: 100%; height: 100%;
+    position: relative; transform-style: preserve-3d;
+    transition: transform 0.7s ease;
+  }
+  .tarot-card.flipped { transform: rotateY(180deg); }
+  .tarot-card-face, .tarot-card-back {
+    position: absolute; width: 100%; height: 100%;
+    backface-visibility: hidden; border-radius: 4px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 3px;
+  }
+  .tarot-card-back {
+    background: linear-gradient(135deg, #2D0A3F, #8B2252);
+    border: 1px solid rgba(201,149,108,0.4);
+    font-size: 24px;
+  }
+  .tarot-card-back::after {
+    content: ''; position: absolute; inset: 3px;
+    border: 1px solid rgba(201,149,108,0.2); border-radius: 3px;
+  }
+  .tarot-card-face {
+    background: linear-gradient(160deg, #1a0628, #2D0A3F);
+    border: 1px solid rgba(201,149,108,0.5);
+    transform: rotateY(180deg); padding: 4px;
+  }
+  .tarot-card-face.reversed { transform: rotateY(180deg) rotate(180deg); }
+  .tarot-symbol { font-size: 22px; line-height: 1; }
+  .tarot-numeral {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 7px; color: var(--gold); letter-spacing: 1px; opacity: 0.8;
+  }
+  .tarot-info { width: 100%; text-align: center; min-width: 0; }
+  .tarot-name {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(9px, 1.2vh, 13px);
+    color: var(--gold); letter-spacing: 1px; line-height: 1.2; margin-bottom: 2px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;
+  }
+  .tarot-reversed-tag {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: clamp(9px, 1.1vh, 11px); color: var(--dusty-rose); opacity: 0.9; margin-bottom: 2px;
+  }
+  .tarot-meaning {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: clamp(9px, 1.2vh, 13px);
+    color: var(--rose-gold); line-height: 1.35; margin-bottom: 3px;
+  }
+  .tarot-keyword {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(7px, 0.9vh, 9px); color: var(--text-dim); letter-spacing: 2px;
+    text-transform: uppercase; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;
+  }
+  .tarot-tap-hint {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: 10px; color: var(--text-dim); opacity: 0.5;
+    margin-top: 4px;
+  }
+
+  /* ══════════════════════════════
+     CELL D: WEATHER  (col 2, row 2)
+  ══════════════════════════════ */
+  .cell-weather {
+    grid-column: 3; grid-row: 3;
+    background: rgba(35,6,24,0.45);
+    display: flex; flex-direction: column;
+    padding: 8px 10px;
+  }
+  .weather-inner {
+    flex: 1; display: flex; align-items: center; gap: 8px;
+  }
+  .weather-icon { font-size: clamp(20px, 3.5vh, 36px); flex-shrink: 0; }
+  .weather-main { flex: 1; min-width: 0; overflow: hidden; }
+  .weather-temp {
+    font-family: 'Cormorant Garamond', serif; font-weight: 300;
+    font-size: clamp(18px, 2.8vh, 36px);
+    color: var(--gold-light); line-height: 1;
+    white-space: nowrap;
+  }
+  .weather-condition {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: clamp(9px, 1.4vh, 13px); color: var(--rose-gold); margin-top: 2px;
+    text-transform: capitalize;
+    white-space: normal; overflow: hidden;
+  }
+  .weather-details { display: flex; gap: 6px; margin-top: 3px; flex-wrap: wrap; }
+  .weather-detail {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(7px, 1vh, 9px); color: var(--text-dim); letter-spacing: 1px;
+    white-space: nowrap;
+  }
+
+  /* ══════════════════════════════
+     CELL E: NEWS  (col 2, row 3)
+  ══════════════════════════════ */
+  .cell-news {
+    grid-column: 3; grid-row: 4;
+    background: rgba(40,8,28,0.4);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+  }
+  .news-scroll-wrap { flex: 1; overflow: hidden; position: relative; }
+  .news-inner { display: flex; flex-direction: column; gap: 7px; }
+  .news-item {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: clamp(9px, 1.4vh, 13px);
+    color: var(--text-dim); line-height: 1.4;
+    border-left: 2px solid rgba(201,149,108,0.2); padding-left: 7px;
+    flex-shrink: 0;
+  }
+  @keyframes scrollNews {
+    0%   { transform: translateY(0); }
+    100% { transform: translateY(-50%); }
+  }
+  .news-inner.scrolling { animation: scrollNews 28s linear infinite; }
+
+  /* ══════════════════════════════
+     CELL F: PILLARS OF DESTINY  (col 1, rows 1–3)
+  ══════════════════════════════ */
+  .cell-pillars {
+    grid-column: 2; grid-row: 1 / 4;
+    background: rgba(40,8,28,0.45);
+    display: flex; flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+    padding: 8px 10px;
+  }
+  .pillars-day-type {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(9px, 1.5vh, 15px);
+    letter-spacing: 1px; color: var(--gold);
+    text-transform: uppercase; margin-bottom: 1px; line-height: 1.2;
+    flex-shrink: 0;
+  }
+  .pillars-energy {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: clamp(8px, 1.2vh, 12px);
+    color: var(--rose-gold); line-height: 1.3;
+    margin-bottom: 4px; opacity: 0.9;
+    flex-shrink: 0;
+  }
+  .pillars-rows {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 2px 8px; margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+  .pillars-row { display: flex; align-items: baseline; gap: 4px; }
+  .pillars-row.full-row { grid-column: 1 / -1; }
+  .pillars-row-label {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(6px, 0.9vh, 9px); letter-spacing: 1px; color: var(--text-dim);
+    text-transform: uppercase; min-width: 32px; flex-shrink: 0;
+  }
+  .pillars-row-value {
+    font-family: 'IM Fell English', serif;
+    font-size: clamp(8px, 1.2vh, 12px);
+    color: var(--rose-gold-bright); line-height: 1.2;
+  }
+  .pillars-row-value.avoid { color: var(--text-dim); }
+  .pillars-divider {
+    height: 1px; background: rgba(201,149,108,0.15); margin: 3px 0;
+    flex-shrink: 0;
+  }
+  .pillars-romance {
+    background: rgba(139,34,82,0.18);
+    border: 1px solid rgba(201,149,108,0.12);
+    border-radius: 3px; padding: 3px 6px; margin-bottom: 4px;
+    flex-shrink: 0;
+  }
+  .pillars-romance-header {
+    display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px;
+  }
+  .pillars-romance-label {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(6px, 0.9vh, 9px); letter-spacing: 1px; color: var(--rose-gold); text-transform: uppercase;
+  }
+  .pillars-romance-score {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(8px, 1.1vh, 11px); color: var(--gold);
+  }
+  .pillars-romance-bar {
+    height: 2px; background: rgba(201,149,108,0.15);
+    border-radius: 2px; margin-bottom: 2px; overflow: hidden;
+  }
+  .pillars-romance-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--dusty-rose), var(--gold));
+    border-radius: 2px;
+  }
+  .pillars-romance-text {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: clamp(7px, 1vh, 11px); color: var(--rose-gold); line-height: 1.25;
+  }
+  .pillars-bottom {
+    display: grid;
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: 5px;
+    flex: 1;
+    min-height: 0;
+    overflow: hidden;
+  }
+  .pillars-hours-col {
+    display: flex; flex-direction: column; gap: 2px;
+    overflow: hidden; min-height: 0;
+  }
+  .pillars-hours-label {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(6px, 0.8vh, 8px); letter-spacing: 2px; color: var(--gold);
+    opacity: 0.7; text-transform: uppercase; margin-bottom: 1px; flex-shrink: 0;
+  }
+  .pillars-hour { display: flex; align-items: center; gap: 4px; }
+  .pillars-hour-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+  .pillars-hour-dot.peak       { background: #4ADE80; box-shadow: 0 0 4px rgba(74,222,128,0.8); }
+  .pillars-hour-dot.neutral    { background: #60A5FA; box-shadow: 0 0 4px rgba(96,165,250,0.7); }
+  .pillars-hour-dot.challenging{ background: #F87171; box-shadow: 0 0 4px rgba(248,113,113,0.8); }
+  .pillars-hour-text {
+    font-family: 'IM Fell English', serif;
+    font-size: clamp(8px, 1.1vh, 12px); color: var(--rose-gold); line-height: 1.25;
+  }
+  .pillars-hour-text.peak        { color: var(--gold-light); }
+  .pillars-hour-text.challenging { color: #F87171; }
+  .pillars-info-col {
+    display: flex; flex-direction: column; gap: 3px;
+    overflow: hidden; min-height: 0;
+  }
+  .pillars-info-block {
+    background: rgba(0,0,0,0.18);
+    border: 1px solid rgba(201,149,108,0.12);
+    border-radius: 2px; padding: 3px 5px;
+    display: flex; flex-direction: column; gap: 1px;
+    flex: 1; min-height: 0; overflow: hidden;
+  }
+  .pillars-info-label {
+    font-family: 'Cinzel Decorative', serif;
+    font-size: clamp(6px, 0.8vh, 8px); letter-spacing: 1px; color: var(--gold);
+    opacity: 0.75; text-transform: uppercase; flex-shrink: 0;
+  }
+  .pillars-info-status {
+    font-family: 'Cormorant Garamond', serif; font-weight: 600;
+    font-size: clamp(8px, 1.1vh, 12px); color: var(--rose-gold-bright); line-height: 1.2;
+  }
+  .pillars-info-text {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: clamp(7px, 0.9vh, 10px); color: var(--text-dim); line-height: 1.2;
+    overflow: hidden;
+  }
+
+  /* ══════════════════════════════
+     CELL G: INTENTIONS  (col 3, row 3)
+  ══════════════════════════════ */
+  .cell-intentions {
+    grid-column: 1; grid-row: 3 / 5;
+    background: rgba(35,6,24,0.5);
+    display: flex; flex-direction: column;
+    overflow: hidden; position: relative;
+  }
+  .todo-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 6px;
+  }
+  .todo-edit-btn {
+    background: none; border: none; color: var(--gold);
+    font-size: 14px; cursor: pointer; opacity: 0.55;
+    font-family: 'Cinzel Decorative', serif; letter-spacing: 1px; padding: 0;
+    flex-shrink: 0;
+  }
+  .todo-list { flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 0; }
+  .todo-item {
+    display: flex; align-items: flex-start; gap: 7px;
+    padding: 4px 0;
+    border-bottom: 1px solid rgba(201,149,108,0.07); cursor: pointer;
+  }
+  .todo-item:last-child { border-bottom: none; }
+  .todo-gem {
+    font-size: 9px; color: var(--gold); margin-top: 3px;
+    flex-shrink: 0; opacity: 0.7;
+  }
+  .todo-text {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: clamp(10px, 1.5vh, 16px);
+    color: var(--rose-gold-bright); line-height: 1.4;
+  }
+  .todo-text.done {
+    text-decoration: line-through; color: var(--text-dim); opacity: 0.5;
+  }
+
+  /* ══════════════════════════════
+     FOOTER BUTTONS
+  ══════════════════════════════ */
+  .mirror-footer {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    display: flex; gap: 0;
+    background: rgba(20,4,28,0.92);
+    border-top: 1px solid rgba(201,149,108,0.18);
+    backdrop-filter: blur(12px);
+  }
+  .outfit-btn {
+    flex: 1; padding: 10px 8px;
+    background: none; border: none;
+    color: var(--rose-gold);
+    font-family: 'Cinzel Decorative', serif;
+    font-size: 11px; letter-spacing: 2px;
+    text-transform: uppercase; cursor: pointer;
+    transition: color 0.3s, background 0.3s;
+  }
+  .outfit-btn:first-child { border-right: 1px solid rgba(201,149,108,0.15); }
+  .outfit-btn:hover { color: var(--gold-light); background: rgba(201,149,108,0.05); }
+  .chronicle-btn { color: var(--gold); }
+
+  /* ══════════════════════════════
+     MODALS (unchanged from portrait)
+  ══════════════════════════════ */
+  #chronicleModal {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(20,4,28,0.97); backdrop-filter: blur(16px);
+    flex-direction: column; overflow: hidden;
+  }
+  #chronicleModal.open { display: flex; }
+  .chronicle-close {
+    position: absolute; top: 16px; right: 20px; z-index: 10;
+    background: none; border: none; color: var(--text-dim);
+    font-size: 18px; cursor: pointer; font-family: serif;
+  }
+  .chronicle-header { padding: 20px 20px 12px; flex-shrink: 0; }
+  .chronicle-title {
+    font-family: 'Cinzel Decorative', serif; font-size: 14px;
+    letter-spacing: 4px; color: var(--gold); text-align: center; margin-bottom: 12px;
+  }
+  .chronicle-count {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: 11px; color: var(--text-dim); text-align: center; margin-bottom: 10px;
+  }
+  .chronicle-search-wrap { position: relative; }
+  .chronicle-search {
+    width: 100%; padding: 8px 12px;
+    background: rgba(40,8,28,0.6); border: 1px solid rgba(201,149,108,0.2);
+    color: var(--rose-gold-bright); font-family: 'IM Fell English', serif;
+    font-style: italic; font-size: 13px; border-radius: 2px; outline: none;
+  }
+  .chronicle-tags { display: flex; flex-wrap: wrap; gap: 5px; padding: 8px 20px; flex-shrink: 0; }
+  .tag-pill {
+    font-family: 'Cinzel Decorative', serif; font-size: 8px;
+    letter-spacing: 1px; padding: 3px 8px;
+    border: 1px solid rgba(201,149,108,0.2); color: var(--text-dim);
+    cursor: pointer; border-radius: 20px; transition: all 0.2s;
+    background: rgba(40,8,28,0.4);
+  }
+  .tag-pill.active { border-color: var(--gold); color: var(--gold); background: rgba(201,149,108,0.1); }
+  .chronicle-grid {
+    flex: 1; overflow-y: auto; padding: 8px 16px 20px;
+    display: grid; grid-template-columns: repeat(3,1fr); gap: 10px;
+  }
+  .polaroid {
+    background: rgba(255,248,240,0.07); border: 1px solid rgba(201,149,108,0.15);
+    padding: 6px 6px 20px; cursor: pointer; transition: transform 0.2s; position: relative;
+  }
+  .polaroid:hover { transform: scale(1.03) rotate(0.5deg); }
+  .polaroid img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+  .polaroid-date {
+    position: absolute; bottom: 4px; left: 0; right: 0; text-align: center;
+    font-family: 'Caveat', cursive; font-size: 9px; color: rgba(139,34,82,0.7);
+  }
+  .polaroid-tags { display: flex; flex-wrap: wrap; gap: 2px; margin-top: 4px; justify-content: center; }
+  .polaroid-tag { font-family: 'Caveat', cursive; font-size: 8px; color: rgba(139,96,80,0.7); }
+  .chronicle-empty {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: 13px; color: var(--text-dim); text-align: center;
+    grid-column: 1/-1; padding: 40px 0;
+  }
+
+  #detailView {
+    display: none; position: fixed; inset: 0; z-index: 400;
+    background: rgba(20,4,28,0.98); backdrop-filter: blur(20px);
+    flex-direction: column; align-items: center; justify-content: center; padding: 30px 20px;
+  }
+  #detailView.open { display: flex; }
+  .detail-close {
+    position: absolute; top: 16px; right: 20px;
+    background: none; border: none; color: var(--text-dim);
+    font-size: 18px; cursor: pointer; font-family: serif;
+  }
+  .detail-polaroid {
+    background: rgba(255,248,240,0.07); border: 1px solid rgba(201,149,108,0.2);
+    padding: 10px 10px 36px; max-width: 240px; width: 100%;
+  }
+  .detail-polaroid img { width: 100%; aspect-ratio: 1; object-fit: cover; display: block; }
+  .detail-date {
+    font-family: 'Caveat', cursive; font-size: 13px; color: rgba(139,34,82,0.8);
+    text-align: center; margin-top: 6px;
+  }
+  .detail-tags {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+    margin-top: 16px; max-width: 280px;
+  }
+  .detail-tag {
+    font-family: 'Caveat', cursive; font-size: 13px; color: var(--rose-gold);
+    background: rgba(139,34,82,0.15); border: 1px solid rgba(201,149,108,0.2);
+    padding: 2px 10px; border-radius: 20px; cursor: pointer;
+  }
+  .detail-actions { display: flex; gap: 12px; margin-top: 20px; }
+  .detail-btn {
+    font-family: 'Cinzel Decorative', serif; font-size: 9px;
+    letter-spacing: 2px; padding: 8px 16px;
+    border: 1px solid rgba(201,149,108,0.25);
+    background: transparent; color: var(--text-dim); cursor: pointer; text-transform: uppercase;
+  }
+  .detail-btn.danger { border-color: rgba(139,34,82,0.4); color: rgba(201,149,108,0.5); }
+
+  /* PHOTOBOOTH */
+  .outfit-modal {
+    display: none; position: fixed; inset: 0; z-index: 500;
+    background: radial-gradient(ellipse at center, #6B1E4A 0%, #3D0A2E 50%, #1a0020 100%);
+    flex-direction: column; overflow: hidden;
+  }
+  .outfit-modal.open { display: flex; }
+  .pb-curtain {
+    position: absolute; inset: 0; z-index: 10;
+    display: flex; align-items: stretch; pointer-events: none;
+  }
+  .pb-curtain-left, .pb-curtain-right {
+    flex: 1; background: linear-gradient(180deg, #1a0020 0%, #2D0A3F 100%);
+    transition: transform 1.2s cubic-bezier(0.4,0,0.2,1);
+    position: relative; overflow: hidden;
+  }
+  .pb-curtain.open .pb-curtain-left  { transform: translateX(-100%); }
+  .pb-curtain.open .pb-curtain-right { transform: translateX(100%); }
+  .pb-booth {
+    position: relative; z-index: 5;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: flex-start;
+    padding: 20px 16px 16px; width: 100%; height: 100%; overflow: hidden;
+  }
+  /* Landscape: side-by-side layout */
+  @media (orientation: landscape) {
+    .pb-booth {
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      padding: 16px 24px;
+    }
+    .pb-title {
+      display: none;
+    }
+    .pb-controls-col {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 12px; flex-shrink: 0;
+    }
+    .pb-reading { margin-top: 0; }
+    .back-link { margin-top: 0 !important; }
+  }
+  @media (orientation: portrait) {
+    .pb-controls-col {
+      display: contents;
+    }
+  }
+  .pb-title {
+    font-family: 'Cinzel Decorative', serif; font-size: 12px;
+    letter-spacing: 4px; color: var(--gold); text-align: center;
+    margin-bottom: 10px; text-transform: uppercase;
+  }
+  .pb-polaroid-wrap {
+    display: flex; flex-direction: column;
+    align-items: center;
+    background: #f5efe6;
+    padding: 12px 12px 40px 12px;
+    box-shadow: 2px 4px 16px rgba(0,0,0,0.5), 0 0 0 1px rgba(0,0,0,0.1);
+    transform: rotate(-1.5deg);
+    max-width: 300px; width: 80vw;
+    flex-shrink: 0;
+  }
+  .pb-viewfinder {
+    width: 100%; aspect-ratio: 1;
+    background: #000;
+    position: relative; overflow: hidden;
+  }
+  .pb-polaroid-bottom {
+    height: 8px; width: 100%;
+  }
+  #pbVideo { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+  #pbCanvas { display: none; }
+  #pbPhoto { width: 100%; height: 100%; object-fit: cover; display: none; }
+  .pb-rose-corner { position: absolute; font-size: 20px; opacity: 0.5; pointer-events: none; }
+  .pb-rose-tl { top: 4px; left: 4px; }
+  .pb-rose-tr { top: 4px; right: 4px; transform: scaleX(-1); }
+  .pb-countdown {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'Cinzel Decorative', serif; font-size: 72px;
+    color: var(--gold-light); opacity: 0;
+    text-shadow: 0 0 30px rgba(240,208,144,0.6); transition: opacity 0.3s;
+  }
+  .pb-rune {
+    position: absolute; font-size: 20px; opacity: 0;
+    animation: runeFloat 3s ease-out forwards; pointer-events: none;
+  }
+  @keyframes runeFloat {
+    0%   { opacity: 0.8; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-80px) scale(0.5); }
+  }
+  .pb-reading {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: 13px; color: var(--rose-gold); text-align: center;
+    min-height: 20px; transition: opacity 0.5s; margin-top: 8px; padding: 0 8px;
+  }
+  .pb-controls {
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    margin-top: 10px; width: 100%;
+  }
+  .timer-options { display: flex; gap: 10px; }
+  .timer-opt {
+    font-family: 'Cinzel Decorative', serif; font-size: 10px;
+    letter-spacing: 2px; padding: 5px 12px;
+    border: 1px solid rgba(201,149,108,0.25); background: transparent;
+    color: var(--text-dim); cursor: pointer; border-radius: 2px; transition: all 0.2s;
+  }
+  .timer-opt.active { border-color: var(--gold); color: var(--gold); background: rgba(201,149,108,0.08); }
+  .capture-btn {
+    width: 58px; height: 58px; border-radius: 50%;
+    border: 2px solid var(--rose-gold); background: rgba(45,10,63,0.6);
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease; backdrop-filter: blur(8px);
+  }
+  .capture-btn::before {
+    content: ''; width: 42px; height: 42px; border-radius: 50%;
+    background: radial-gradient(circle, var(--rose-gold-light), var(--rose-gold));
+    box-shadow: 0 0 15px rgba(201,149,108,0.4); transition: all 0.3s ease;
+  }
+  .capture-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .capture-btn:not(:disabled):hover::before { box-shadow: 0 0 25px rgba(201,149,108,0.7); }
+  .pb-hint {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: 11px; color: var(--text-dim); text-align: center;
+  }
+  .action-btns {
+    display: none; flex-direction: row; gap: 10px;
+  }
+  .action-btns.visible { display: flex; }
+  .action-btn {
+    font-family: 'Cinzel Decorative', serif; font-size: 9px;
+    letter-spacing: 2px; padding: 8px 16px;
+    border: 1px solid rgba(201,149,108,0.25); background: transparent;
+    color: var(--text-dim); cursor: pointer; text-transform: uppercase; transition: all 0.2s;
+  }
+  .action-btn.primary {
+    background: linear-gradient(135deg, var(--dusty-rose), var(--aubergine-mid));
+    border: none; color: var(--gold-light);
+  }
+  .back-link {
+    font-family: 'Cinzel Decorative', serif; font-size: 9px;
+    letter-spacing: 2px; color: var(--text-dim);
+    background: none; border: none; cursor: pointer; text-transform: uppercase; opacity: 0.6;
+  }
+  .saved-toast {
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(20px);
+    background: rgba(45,10,63,0.95); border: 1px solid rgba(201,149,108,0.3);
+    padding: 10px 20px; color: var(--gold);
+    font-family: 'Cinzel Decorative', serif; font-size: 10px; letter-spacing: 2px;
+    opacity: 0; transition: all 0.4s ease; backdrop-filter: blur(8px);
+    white-space: nowrap;
+  }
+  .saved-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .petal {
+    position: fixed; font-size: 18px; pointer-events: none; z-index: 600;
+    animation: petalFall 2s ease-out forwards;
+  }
+  @keyframes petalFall {
+    0%   { opacity: 1; transform: translateY(0) rotate(0deg); }
+    100% { opacity: 0; transform: translateY(-120px) rotate(180deg); }
+  }
+
+  /* TODO EDITOR MODAL */
+  .edit-modal {
+    display: none; position: fixed; inset: 0; z-index: 600;
+    background: rgba(20,4,28,0.92); backdrop-filter: blur(16px);
+    align-items: center; justify-content: center;
+  }
+  .edit-modal.open { display: flex; }
+  .edit-modal-inner {
+    background: rgba(40,8,28,0.95);
+    border: 1px solid rgba(201,149,108,0.2);
+    padding: 20px; width: 90%; max-width: 380px; max-height: 80vh;
+    overflow-y: auto; display: flex; flex-direction: column; gap: 10px;
+  }
+  .edit-modal-title {
+    font-family: 'Cinzel Decorative', serif; font-size: 12px;
+    letter-spacing: 3px; color: var(--gold); text-align: center;
+  }
+  .edit-modal-sub {
+    font-family: 'IM Fell English', serif; font-style: italic;
+    font-size: 11px; color: var(--text-dim); text-align: center;
+  }
+  .edit-item {
+    display: flex; align-items: center; gap: 8px;
+    border: 1px solid rgba(201,149,108,0.15); padding: 6px 8px;
+  }
+  .edit-item input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--rose-gold-bright);
+    font-family: 'IM Fell English', serif; font-style: italic; font-size: 13px;
+  }
+  .edit-item-del {
+    background: none; border: none; color: rgba(201,149,108,0.4);
+    font-size: 14px; cursor: pointer; line-height: 1; padding: 0 2px;
+  }
+  .edit-add-btn {
+    font-family: 'Cinzel Decorative', serif; font-size: 9px;
+    letter-spacing: 2px; padding: 8px;
+    border: 1px dashed rgba(201,149,108,0.2); background: transparent;
+    color: var(--text-dim); cursor: pointer; text-align: center;
+    text-transform: uppercase;
+  }
+  .edit-footer { display: flex; gap: 8px; justify-content: flex-end; }
+  .edit-cancel, .edit-save {
+    font-family: 'Cinzel Decorative', serif; font-size: 9px;
+    letter-spacing: 2px; padding: 8px 16px; cursor: pointer;
+    text-transform: uppercase; border-radius: 2px;
+  }
+  .edit-cancel { background: none; border: 1px solid rgba(201,149,108,0.2); color: var(--text-dim); }
+  .edit-save   {
+    background: linear-gradient(135deg, var(--dusty-rose), var(--aubergine-mid));
+    border: none; color: var(--gold-light);
+  }
+</style>
+</head>
+<body>
+
+<canvas id="sparkles"></canvas>
+
+<!--
+  GRID LAYOUT (3×3):
+  Col 1 (2fr): Clock (rows 1-2) | Mirror Speaks (row 3)
+  Col 2 (1fr): Tarot (row 1) | Weather (row 2) | News (row 3)
+  Col 3 (1fr): Pillars of Destiny (rows 1-2) | Intentions (row 3)
+-->
+<div class="mirror-grid">
+
+  <!-- CELL A: CLOCK (col 1, rows 1–2) -->
+  <div class="cell cell-clock">
+    <div class="clock-time">
+      <span id="hours">10</span><span class="clock-colon">:</span><span id="minutes">00</span>
+    </div>
+    <div class="clock-date" id="dateDisplay">March 11, 2026</div>
+    <div class="clock-day" id="dayDisplay">Wednesday · AM</div>
+  </div>
+
+  <!-- CELL B: MIRROR SPEAKS (col 1, row 3) -->
+  <div class="cell cell-speaks">
+    <div class="incantation" id="mirrorSpeaks">"You are the fairest of them all..."</div>
+    <div class="mirror-attribution">— The Mirror Speaks —</div>
+  </div>
+
+  <!-- CELL C: DAILY CARD (col 2, row 1) -->
+  <div class="cell cell-tarot">
+    <span class="widget-label">The Daily Card</span>
+    <div class="tarot-inner">
+      <div class="tarot-card-wrap">
+        <div class="tarot-scene" onclick="flipTarot()">
+          <div class="tarot-card" id="tarotCard">
+            <div class="tarot-card-back">🌙</div>
+            <div class="tarot-card-face" id="tarotFace">
+              <div class="tarot-symbol" id="tarotSymbol">☽</div>
+              <div class="tarot-numeral" id="tarotNumeral">I</div>
+            </div>
+          </div>
+        </div>
+        <div class="tarot-tap-hint" id="tarotHint">tap to reveal</div>
+      </div>
+      <div class="tarot-info">
+        <div class="tarot-name" id="tarotName">The Moon</div>
+        <div class="tarot-reversed-tag" id="tarotReversedTag" style="display:none">↓ Reversed</div>
+        <div class="tarot-meaning" id="tarotMeaning">Your card for today awaits...</div>
+        <div class="tarot-keyword" id="tarotKeyword"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CELL D: WEATHER (col 2, row 2) -->
+  <div class="cell cell-weather">
+    <span class="widget-label">Jacksonville, FL</span>
+    <div class="weather-inner">
+      <div class="weather-icon" id="weatherIcon">🌤</div>
+      <div class="weather-main">
+        <div class="weather-temp" id="weatherTemp">—°</div>
+        <div class="weather-condition" id="weatherCondition">the skies are mysterious</div>
+        <div class="weather-details">
+          <span class="weather-detail" id="weatherHumidity">💧 —%</span>
+          <span class="weather-detail" id="weatherWind">💨 — mph</span>
+          <span class="weather-detail" id="weatherUV">☀ UV —</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CELL E: NEWS (col 2, row 3) -->
+  <div class="cell cell-news">
+    <span class="widget-label">Dispatches</span>
+    <div class="news-scroll-wrap">
+      <div class="news-inner" id="newsItems">
+        <div class="news-item">The morning's tales are still being gathered...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CELL F: PILLARS OF DESTINY (col 1, rows 1–3) -->
+  <div class="cell cell-pillars">
+    <span class="widget-label">Pillars of Destiny</span>
+    <div class="pillars-day-type" id="pillarsDayType">Balanced Earth Day — Steady</div>
+    <div class="pillars-energy" id="pillarsEnergy">Loading the day's energy...</div>
+    <div class="pillars-rows" id="pillarsRows"></div>
+    <div class="pillars-divider"></div>
+    <div class="pillars-romance" id="pillarsRomance"></div>
+    <div class="pillars-divider"></div>
+    <div class="pillars-bottom">
+      <div class="pillars-hours-col">
+        <div class="pillars-hours-label">Hours</div>
+        <div id="pillarsHours"></div>
+      </div>
+      <div class="pillars-info-col" id="pillarsBottomRow"></div>
+    </div>
+  </div>
+
+  <!-- CELL G: TODAY'S INTENTIONS (col 3, row 3) -->
+  <div class="cell cell-intentions">
+    <div class="todo-header">
+      <button class="todo-edit-btn" onclick="openTodoEditor()">✏</button>
+      <span class="widget-label" style="margin-bottom:0">Today's Intentions</span>
+    </div>
+    <div class="todo-list" id="todoItems">
+      <div class="todo-item"><span class="todo-gem">◆</span><span class="todo-text">Add your intentions...</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- FOOTER BUTTONS -->
+<div class="mirror-footer">
+  <button class="outfit-btn" onclick="openOutfitLogger()">✦ Log Today's Enchantment</button>
+  <button class="outfit-btn chronicle-btn" onclick="openChronicle()">✦ The Chronicle ✦</button>
+</div>
+
+<!-- CHRONICLE MODAL -->
+<div id="chronicleModal">
+  <button class="chronicle-close" onclick="closeChronicle()">✕</button>
+  <div class="chronicle-header">
+    <div class="chronicle-title">✦ The Chronicle ✦</div>
+    <div class="chronicle-count" id="chronicleCount"></div>
+    <div class="chronicle-search-wrap">
+      <input class="chronicle-search" id="chronicleSearch" placeholder="Search by keyword, date, or tag..." oninput="filterChronicle()">
+    </div>
+  </div>
+  <div class="chronicle-tags" id="chronicleTags"></div>
+  <div class="chronicle-grid" id="chronicleGrid"></div>
+</div>
+
+<!-- DETAIL VIEW -->
+<div id="detailView">
+  <button class="detail-close" onclick="closeDetail()">✕</button>
+  <div class="detail-polaroid">
+    <img id="detailImg" src="" alt="outfit">
+    <div class="detail-date" id="detailDate"></div>
+  </div>
+  <div class="detail-tags" id="detailTags"></div>
+  <div class="detail-actions">
+    <button class="detail-btn" onclick="closeDetail()">← Back</button>
+    <button class="detail-btn danger" onclick="deleteCurrentOutfit()">✕ Delete</button>
+  </div>
+</div>
+
+<!-- TODO EDITOR MODAL -->
+<div class="edit-modal" id="todoModal">
+  <div class="edit-modal-inner">
+    <div class="edit-modal-title">✦ Edit Intentions ✦</div>
+    <div class="edit-modal-sub">Tap to edit · tap ✕ to remove</div>
+    <div id="todoEditorList"></div>
+    <button class="edit-add-btn" onclick="addTodoItem()">+ Add intention</button>
+    <div class="edit-footer">
+      <button class="edit-cancel" onclick="closeTodoEditor(false)">Cancel</button>
+      <button class="edit-save"   onclick="closeTodoEditor(true)">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- PHOTOBOOTH MODAL -->
+<div class="outfit-modal" id="outfitModal">
+  <div class="pb-curtain" id="pbCurtain">
+    <div class="pb-curtain-left"></div>
+    <div class="pb-curtain-right"></div>
+  </div>
+  <div class="pb-booth" id="pbBooth">
+    <div class="pb-title">✦ You Look Enchanting ✦</div>
+    <div class="pb-polaroid-wrap">
+      <div class="pb-viewfinder" id="pbViewfinder">
+        <video id="pbVideo" autoplay playsinline muted></video>
+        <canvas id="pbCanvas"></canvas>
+        <img id="pbPhoto" alt="captured">
+        <div class="pb-countdown" id="pbCountdown">3</div>
+      </div>
+      <div class="pb-polaroid-bottom"></div>
+    </div>
+    <div class="pb-controls-col">
+      <div class="pb-reading" id="pbReading"></div>
+      <div class="pb-controls">
+        <div class="timer-options" id="timerOptions">
+          <button class="timer-opt active" data-seconds="3" onclick="setTimer(this)">3s</button>
+          <button class="timer-opt" data-seconds="6" onclick="setTimer(this)">6s</button>
+          <button class="timer-opt" data-seconds="9" onclick="setTimer(this)">9s</button>
+        </div>
+        <button class="capture-btn" id="captureBtn" onclick="startCapture()" disabled></button>
+        <div class="pb-hint" id="pbHint">Preparing the chamber...</div>
+        <div class="action-btns" id="actionBtns">
+          <button class="action-btn primary" onclick="saveOutfit()">Save to Chronicle</button>
+          <button class="action-btn" onclick="retakePhoto()">Retake</button>
+        </div>
+      </div>
+      <button class="back-link" onclick="closeOutfitLogger()" style="margin-top:10px;">← Return to the Mirror</button>
+    </div>
+  </div>
+  <div class="saved-toast" id="savedToast">✦ Saved to the Chronicle ✦</div>
+</div>
+
+<script>
+// ── SPARKLES ──
+const canvas = document.getElementById('sparkles');
+const ctx = canvas.getContext('2d');
+function resizeCanvas() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+const sparkles = [];
+for (let i = 0; i < 35; i++) {
+  sparkles.push({
+    x: Math.random() * window.innerWidth,
+    y: Math.random() * window.innerHeight,
+    size: Math.random() * 2 + 0.5,
+    opacity: Math.random(),
+    speed: Math.random() * 0.3 + 0.1,
+    twinkleSpeed: Math.random() * 0.02 + 0.005
+  });
+}
+function drawSparkles() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  sparkles.forEach(s => {
+    s.opacity += s.twinkleSpeed;
+    if (s.opacity > 1 || s.opacity < 0) s.twinkleSpeed *= -1;
+    s.y -= s.speed;
+    if (s.y < -10) { s.y = canvas.height + 10; s.x = Math.random() * canvas.width; }
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(240,208,144,${Math.max(0,Math.min(1,s.opacity))})`;
+    ctx.fill();
+  });
+  requestAnimationFrame(drawSparkles);
+}
+drawSparkles();
+
+// ── CLOCK ──
+function updateClock() {
+  const now = new Date();
+  let h = now.getHours();
+  const m = now.getMinutes().toString().padStart(2,'0');
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12 || 12;
+  document.getElementById('hours').textContent = h.toString().padStart(2,'0');
+  document.getElementById('minutes').textContent = m;
+  const days   = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('dateDisplay').textContent = `${months[now.getMonth()]} ${now.getDate()}, ${now.getFullYear()}`;
+  document.getElementById('dayDisplay').textContent  = `${days[now.getDay()]} · ${ampm}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ── WEATHER ──
+const WEATHER_API_KEY = '2c350391fcbf3879b0ec40a57c3e4af2';
+const WEATHER_CITY = 'Jacksonville,FL,US';
+const weatherIcons = { Clear:'☀️', Clouds:'☁️', Rain:'🌧️', Drizzle:'🌦️', Thunderstorm:'⛈️', Snow:'❄️', Mist:'🌫️', Fog:'🌫️', Haze:'🌫️' };
+async function fetchWeather() {
+  try {
+    const r = await fetch(`https://api.openweathermap.org/data/2.5/weather?q=${WEATHER_CITY}&appid=${WEATHER_API_KEY}&units=imperial`);
+    if (!r.ok) return;
+    const d = await r.json();
+    document.getElementById('weatherTemp').textContent = `${Math.round(d.main.temp)}°`;
+    document.getElementById('weatherCondition').textContent = d.weather[0].description;
+    document.getElementById('weatherIcon').textContent = weatherIcons[d.weather[0].main] || '🌤';
+    document.getElementById('weatherHumidity').textContent = `💧 ${d.main.humidity}%`;
+    document.getElementById('weatherWind').textContent = `💨 ${Math.round(d.wind.speed)} mph`;
+    // Fetch UV index using lat/lon
+    const { lat, lon } = d.coord;
+    const uvR = await fetch(`https://api.openweathermap.org/data/2.5/uvi?lat=${lat}&lon=${lon}&appid=${WEATHER_API_KEY}`);
+    if (uvR.ok) {
+      const uvD = await uvR.json();
+      document.getElementById('weatherUV').textContent = `☀ UV ${Math.round(uvD.value)}`;
+    }
+  } catch(e) {}
+}
+fetchWeather();
+setInterval(fetchWeather, 600000);
+
+// ── MIRROR SPEAKS ──
+const affirmations = [
+  '"Today, every room you enter becomes more beautiful."',
+  '"There is nobody quite like you — and that is your power."',
+  '"Your presence is the most elegant thing in the room."',
+  '"You were made for exactly this kind of day."',
+  '"Magic follows wherever you choose to go."',
+  '"You carry entire worlds within you."',
+  '"Softness and strength — you have always had both."',
+  '"The mirror never lies: you are extraordinary."',
+  '"Everything you need, you already possess."',
+  '"Today belongs to you. Wear it well."',
+  '"The universe arranged itself just to create you."',
+  '"You are the fairest of them all — in every way that matters."',
+];
+let affirmIdx = 0;
+const speaksEl = document.getElementById('mirrorSpeaks');
+function rotateSpeaks() {
+  speaksEl.style.opacity = '0';
+  setTimeout(() => {
+    affirmIdx = (affirmIdx + 1) % affirmations.length;
+    speaksEl.textContent = affirmations[affirmIdx];
+    speaksEl.style.opacity = '1';
+  }, 1500);
+}
+setInterval(rotateSpeaks, 12000);
+
+// ── NEWS ──
+async function fetchNews() {
+  const feeds = [
+    'https://feeds.npr.org/1001/rss.xml',
+    'https://feeds.bbci.co.uk/news/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
+  ];
+  for (const feed of feeds) {
+    try {
+      const r = await fetch(`https://api.rss2json.com/v1/api.json?rss_url=${encodeURIComponent(feed)}&count=10`);
+      if (!r.ok) continue;
+      const d = await r.json();
+      if (d.status !== 'ok' || !d.items?.length) continue;
+      const el = document.getElementById('newsItems');
+      const html = d.items.map(i => `<div class="news-item">${i.title}</div>`).join('');
+      el.innerHTML = html + html;
+      el.classList.add('scrolling');
+      return;
+    } catch(e) {}
+  }
+  // Final fallback: hardcoded headlines so the widget isn't empty
+  const el = document.getElementById('newsItems');
+  el.innerHTML = '<div class="news-item">News unavailable — check connection</div>';
+}
+fetchNews();
+setInterval(fetchNews, 300000);
+
+// ── PILLARS OF DESTINY ──
+const PILLARS_CHART = { dayMaster:'Yang Metal', chartStrength:'Strong', luckyElements:['Fire','Wood'] };
+const P_STEMS = {
+  0:{char:'甲',name:'Yang Wood',element:'Wood',yin:false},1:{char:'乙',name:'Yin Wood',element:'Wood',yin:true},
+  2:{char:'丙',name:'Yang Fire',element:'Fire',yin:false},3:{char:'丁',name:'Yin Fire',element:'Fire',yin:true},
+  4:{char:'戊',name:'Yang Earth',element:'Earth',yin:false},5:{char:'己',name:'Yin Earth',element:'Earth',yin:true},
+  6:{char:'庚',name:'Yang Metal',element:'Metal',yin:false},7:{char:'辛',name:'Yin Metal',element:'Metal',yin:true},
+  8:{char:'壬',name:'Yang Water',element:'Water',yin:false},9:{char:'癸',name:'Yin Water',element:'Water',yin:true}
+};
+const P_BRANCHES = {
+  0:{char:'子',name:'Rat',element:'Water',hour:'11pm-1am',animal:'🐭'},
+  1:{char:'丑',name:'Ox',element:'Earth',hour:'1am-3am',animal:'🐂'},
+  2:{char:'寅',name:'Tiger',element:'Wood',hour:'3am-5am',animal:'🐯'},
+  3:{char:'卯',name:'Rabbit',element:'Wood',hour:'5am-7am',animal:'🐰'},
+  4:{char:'辰',name:'Dragon',element:'Earth',hour:'7am-9am',animal:'🐉'},
+  5:{char:'巳',name:'Snake',element:'Fire',hour:'9am-11am',animal:'🐍'},
+  6:{char:'午',name:'Horse',element:'Fire',hour:'11am-1pm',animal:'🐴'},
+  7:{char:'未',name:'Sheep',element:'Earth',hour:'1pm-3pm',animal:'🐑'},
+  8:{char:'申',name:'Monkey',element:'Metal',hour:'3pm-5pm',animal:'🐵'},
+  9:{char:'酉',name:'Rooster',element:'Metal',hour:'5pm-7pm',animal:'🐓'},
+  10:{char:'戌',name:'Dog',element:'Earth',hour:'7pm-9pm',animal:'🐕'},
+  11:{char:'亥',name:'Pig',element:'Water',hour:'9pm-11pm',animal:'🐷'}
+};
+function getPillarsStemBranch(dateStr) {
+  const [y,m,d] = dateStr.split('-').map(Number);
+  const ref = new Date(2026,1,19), refS=6, refB=0;
+  const cur = new Date(y,m-1,d);
+  const diff = Math.floor((cur-ref)/86400000);
+  return { stem:P_STEMS[((refS+diff)%10+10)%10], branch:P_BRANCHES[((refB+diff)%12+12)%12] };
+}
+const WEAR_COLORS = {
+  Fire:{wear:'Red, Purple, Pink, Magenta',avoid:'Black, Dark Blue'},
+  Wood:{wear:'Green, Teal, Cyan, Turquoise',avoid:'White, Gray, Gold'},
+  Water:{wear:'Black, Dark Blue, Navy, Indigo',avoid:'Red, Orange, Yellow'},
+  Earth:{wear:'Yellow, Beige, Brown, Tan, Orange',avoid:'Black, Dark Blue, Green'},
+  Metal:{wear:'White, Silver, Gray, Metallic, Cream',avoid:'Red, Green, Purple'}
+};
+function getDayEnergy(e,l,s) {
+  if(l.includes(e)) {
+    if(e==='Fire') return {type:'Peak Fire Day ✦ High Energy',text:'Your lucky Fire element is active. Perfect for major moves, important calls & creative breakthroughs.'};
+    if(e==='Wood') return {type:'Peak Wood Day ✦ Growth Energy',text:'Your lucky Wood element is active. Excellent for expansion, learning & new beginnings.'};
+    return {type:`Peak ${e} Day ✦ Lucky`,text:`Your lucky ${e} element activates today.`};
+  }
+  const destroys = {Fire:'Metal',Water:'Fire',Wood:'Earth',Earth:'Water',Metal:'Wood'};
+  if(destroys[e]===s) return {type:`Challenging ${e} Day`,text:`Today's ${e} element clashes with your ${s} day master. Take things slowly and avoid big risks.`};
+  return {type:`Neutral ${e} Day — Steady`,text:`A balanced day. Good for steady progress, maintaining routines, and careful planning.`};
+}
+function buildPillars() {
+  const now = new Date();
+  const pad = n=>n.toString().padStart(2,'0');
+  const dateStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+  const {stem,branch} = getPillarsStemBranch(dateStr);
+  const e = stem.element;
+  const lucky = PILLARS_CHART.luckyElements;
+  const dm = PILLARS_CHART.dayMaster.split(' ')[1];
+  const energy = getDayEnergy(e, lucky, dm);
+  const wc = WEAR_COLORS[e] || WEAR_COLORS.Earth;
+
+  document.getElementById('pillarsDayType').textContent = energy.type;
+  document.getElementById('pillarsEnergy').textContent = energy.text;
+
+  // Pillar rows
+  const foods = {Fire:'Warm spices, red foods, citrus',Wood:'Leafy greens, sprouts, sour foods',Water:'Salt, dark berries, seafood',Earth:'Root vegetables, yellow fruits',Metal:'White foods, pungent herbs'};
+  const exercises = {Fire:'Dance, HIIT, hot yoga',Wood:'Running, stretching, pilates',Water:'Swimming, flow yoga, tai chi',Earth:'Hiking, grounding walks',Metal:'Strength training, breathing'};
+  document.getElementById('pillarsRows').innerHTML = `
+    <div class="pillars-row">
+      <span class="pillars-row-label">Stem</span>
+      <span class="pillars-row-value">${stem.char} ${stem.name}</span>
+    </div>
+    <div class="pillars-row">
+      <span class="pillars-row-label">Branch</span>
+      <span class="pillars-row-value">${branch.char} ${branch.name} ${branch.animal}</span>
+    </div>
+    <div class="pillars-row">
+      <span class="pillars-row-label">Wear</span>
+      <span class="pillars-row-value">${wc.wear}</span>
+    </div>
+    <div class="pillars-row">
+      <span class="pillars-row-label">Avoid</span>
+      <span class="pillars-row-value avoid">${wc.avoid}</span>
+    </div>
+    <div class="pillars-row">
+      <span class="pillars-row-label">Eat</span>
+      <span class="pillars-row-value">${foods[e]||''}</span>
+    </div>
+    <div class="pillars-row exercise">
+      <span class="pillars-row-label">Move</span>
+      <span class="pillars-row-value">${exercises[e]||''}</span>
+    </div>`;
+
+  // Romance — using richer logic from four pillars app
+  function getRomance(e, lucky, strength) {
+    if (e === 'Fire' && lucky.includes('Fire'))
+      return { score: 9, status: '🔥 Excellent — Fire Romance', text: 'Peak day. Charisma and magnetism at maximum. Say yes to social invitations.', hours: '🐍 Snake (9–11am) & 🐴 Horse (11am–1pm)' };
+    if (e === 'Wood' && lucky.includes('Wood'))
+      return { score: 8, status: '🌿 Very Good — Wood Romance', text: 'Excellent for genuine connections and expressing feelings. Be open.', hours: '🐯 Tiger (3–5am) & 🐰 Rabbit (5–7am)' };
+    if (e === 'Water' && strength === 'Strong')
+      return { score: 3, status: '💧 Challenging — Use Caution', text: 'Focus on reflection rather than pursuing romance. Respond thoughtfully.', hours: '🐉 Dragon (7–9am) only' };
+    return { score: 5, status: '◆ Moderate — Neutral Energy', text: 'Balanced day. Be responsive if someone reaches out. Save major moves for peak days.', hours: '🐉 Dragon (7–9am) — steady' };
+  }
+  const rom = getRomance(e, lucky, PILLARS_CHART.chartStrength);
+  document.getElementById('pillarsRomance').innerHTML = `
+    <div class="pillars-romance-header">
+      <span class="pillars-romance-label">💕 Romance</span>
+      <span class="pillars-romance-score">${rom.score}/10</span>
+    </div>
+    <div class="pillars-romance-bar"><div class="pillars-romance-fill" style="width:${rom.score*10}%"></div></div>
+    <div class="pillars-romance-text">${rom.status}</div>
+    <div class="pillars-romance-text" style="opacity:0.75;font-size:clamp(10px,0.95vw,12px);margin-top:2px">${rom.text}</div>
+    <div class="pillars-romance-text" style="opacity:0.6;font-size:clamp(9px,0.85vw,11px);margin-top:1px">✨ ${rom.hours}</div>`;
+
+  // ── EXERCISE ──
+  function getExercise(e, lucky) {
+    if (lucky.includes(e) && e === 'Fire')
+      return { window: '🐍 Snake (9–11am) or 🐴 Horse (11am–1pm)', body: 'Peak Fire day — HIIT, weights, cardio. Your lucky element fuels maximum power.' };
+    if (lucky.includes(e) && e === 'Wood')
+      return { window: '🐯 Tiger (3–5am) or 🐰 Rabbit (5–7am)', body: 'Peak Wood day — yoga, stretching, flowing movement. Lucky element supports flexibility.' };
+    if (e === 'Water')
+      return { window: '🐉 Dragon (7–9am) or light stretching', body: 'Challenging Water day — avoid intense workouts. Choose gentle movement.' };
+    return { window: '🐉 Dragon (7–9am) or 🐑 Sheep (1–3pm)', body: 'Neutral day — good for regular workouts, running, gym routine. Steady conditions.' };
+  }
+
+  // ── WORK ENVIRONMENT ──
+  function getWorkEnv(e, lucky) {
+    if (lucky.includes(e))
+      return { headline: '☀️ Open & Dynamic', body: 'Lucky element active — thrive in coffee shops, co-working, or bright energetic spaces.' };
+    if (e === 'Water')
+      return { headline: '🏠 Quiet & Focused', body: 'Water energy benefits from calm, introspective spaces. Home office or library.' };
+    return { headline: '⚖️ Balanced Environment', body: 'Neutral energy — adaptable. Home or public space both work fine.' };
+  }
+
+  // ── TRAVEL ──
+  function getTravel(e, lucky, strength) {
+    if (lucky.includes(e))
+      return { headline: '✈️ Strongly Favored', body: 'Excellent day for travel, movement, and exploration. Lucky element supports expansion.' };
+    if (e === 'Water' && strength === 'Strong')
+      return { headline: '⚠️ Use Caution', body: 'Water challenges your Metal. Local travel OK — avoid long trips or major decisions.' };
+    return { headline: '◆ Neutral', body: 'Travel possible but not favored. Fine for local trips — save journeys for peak days.' };
+  }
+
+  // Hours
+  const h = now.getHours();
+  const peakHours = lucky.flatMap(l=>({Fire:[9,10,13,14],Wood:[3,4,7,8],Water:[23,0,1,17],Earth:[1,7,13,19],Metal:[15,16,17]}[l]||[]));
+  const voidHours = {Fire:[17,18],Wood:[21,22],Water:[9,10],Earth:[3,4],Metal:[11,12]}[e]||[];
+  const currentHourPeak = peakHours.includes(h);
+  const currentHourChal = voidHours.includes(h);
+  const currentCls = currentHourPeak ? 'peak' : currentHourChal ? 'challenging' : 'neutral';
+
+  const peakLabels = {
+    Fire:{9:'Create',10:'Perform',13:'Lead',14:'Decide'},
+    Wood:{3:'Reflect',4:'Meditate',7:'Plan',8:'Connect'},
+    Water:{23:'Rest',0:'Dream',1:'Restore',17:'Trust your gut'},
+    Earth:{1:'Ground',7:'Nourish',13:'Build',19:'Settle'},
+    Metal:{15:'Focus',16:'Refine',17:'Analyze'}
+  };
+  const voidLabels = {
+    Fire:'Skip confrontation', Wood:'Rest, no big calls',
+    Water:'Pause & restore', Earth:'Skip big moves', Metal:'Rest creative work'
+  };
+  const formatH = hr => { const p = hr%12||12; return `${p}${hr<12||hr===24?'am':'pm'}`; };
+  const nextPeakHour = peakHours.find(ph=>ph>h) ?? peakHours[0];
+  const hoursUntilPeak = nextPeakHour > h ? nextPeakHour - h : (24 - h + nextPeakHour);
+  const nextPeakLabel = peakLabels[e]?.[nextPeakHour] || 'Aligned';
+
+  const sortedPeaks = [...new Set(peakHours)].sort((a,b)=>a-b);
+  const windows = [];
+  let wi = 0;
+  while (wi < sortedPeaks.length) {
+    let start = sortedPeaks[wi], end = sortedPeaks[wi];
+    while (wi+1 < sortedPeaks.length && sortedPeaks[wi+1] === sortedPeaks[wi]+1) { wi++; end = sortedPeaks[wi]; }
+    const label = peakLabels[e]?.[start] || peakLabels[e]?.[end] || '';
+    windows.push({ range: start === end ? formatH(start) : `${formatH(start)}–${formatH(end)}`, label });
+    wi++;
+  }
+  const currentLabel = currentHourPeak ? (peakLabels[e]?.[h]||'Aligned') : currentHourChal ? voidLabels[e] : 'Steady flow';
+
+  const ex = getExercise(e, lucky);
+  const wk = getWorkEnv(e, lucky);
+  const tr = getTravel(e, lucky, PILLARS_CHART.chartStrength);
+
+  document.getElementById('pillarsHours').innerHTML = `
+    <div class="pillars-hour">
+      <div class="pillars-hour-dot ${currentCls}"></div>
+      <span class="pillars-hour-text ${currentCls}">Now — ${currentLabel}</span>
+    </div>
+    <div class="pillars-hour">
+      <div class="pillars-hour-dot peak"></div>
+      <span class="pillars-hour-text peak">${formatH(nextPeakHour)} (${hoursUntilPeak}h) — ${nextPeakLabel}</span>
+    </div>
+    ${windows.map(w=>`
+    <div class="pillars-hour">
+      <div class="pillars-hour-dot peak"></div>
+      <span class="pillars-hour-text peak">${w.range}${w.label?` — ${w.label}`:''}</span>
+    </div>`).join('')}
+    ${voidHours.length ? `
+    <div class="pillars-hour">
+      <div class="pillars-hour-dot challenging"></div>
+      <span class="pillars-hour-text challenging">${voidHours.map(formatH).join(', ')} — ${voidLabels[e]}</span>
+    </div>` : ''}
+  `;
+
+  document.getElementById('pillarsBottomRow').innerHTML = `
+    <div class="pillars-info-block">
+      <span class="pillars-info-label">Exercise</span>
+      <div class="pillars-info-status">${ex.window}</div>
+      <div class="pillars-info-text">${ex.body}</div>
+    </div>
+    <div class="pillars-info-block">
+      <span class="pillars-info-label">Work</span>
+      <div class="pillars-info-status">${wk.headline}</div>
+      <div class="pillars-info-text">${wk.body}</div>
+    </div>
+    <div class="pillars-info-block">
+      <span class="pillars-info-label">Travel</span>
+      <div class="pillars-info-status">${tr.headline}</div>
+      <div class="pillars-info-text">${tr.body}</div>
+    </div>
+  `;
+
+}
+buildPillars();
+
+// ── TAROT ──
+const TAROT_DECK = [
+  {name:'The Fool',symbol:'🃏',numeral:'0',meaning:'New beginnings. Take the leap with open-hearted courage.',keyword:'BEGINNINGS · SPONTANEITY'},
+  {name:'The Magician',symbol:'✨',numeral:'I',meaning:'You have every tool you need. Channel your will into action.',keyword:'WILL · SKILL · MANIFESTATION'},
+  {name:'The High Priestess',symbol:'🌙',numeral:'II',meaning:'Trust your deep intuition. The answers lie within.',keyword:'INTUITION · MYSTERY · INNER KNOWING'},
+  {name:'The Empress',symbol:'🌸',numeral:'III',meaning:'Abundance flows. Nurture yourself and watch things grow.',keyword:'ABUNDANCE · FERTILITY · BEAUTY'},
+  {name:'The Emperor',symbol:'👑',numeral:'IV',meaning:'Structure creates freedom. Lead with confidence and authority.',keyword:'AUTHORITY · STRUCTURE · STABILITY'},
+  {name:'The Hierophant',symbol:'⚜️',numeral:'V',meaning:'Seek wisdom from tradition. A mentor may guide you.',keyword:'TRADITION · WISDOM · GUIDANCE'},
+  {name:'The Lovers',symbol:'💕',numeral:'VI',meaning:'A meaningful choice awaits. Follow your heart\'s true north.',keyword:'LOVE · CHOICE · ALIGNMENT'},
+  {name:'The Chariot',symbol:'🏆',numeral:'VII',meaning:'Victory through focus. Harness both light and shadow forces.',keyword:'WILLPOWER · VICTORY · CONTROL'},
+  {name:'Strength',symbol:'🦁',numeral:'VIII',meaning:'Gentle persistence overcomes all. Your inner strength is vast.',keyword:'COURAGE · PATIENCE · COMPASSION'},
+  {name:'The Hermit',symbol:'🕯️',numeral:'IX',meaning:'Turn inward. Wisdom comes from solitary reflection today.',keyword:'INTROSPECTION · GUIDANCE · SOLITUDE'},
+  {name:'Wheel of Fortune',symbol:'☸️',numeral:'X',meaning:'The wheel turns in your favour. Embrace the cycle of change.',keyword:'DESTINY · CYCLES · LUCK'},
+  {name:'Justice',symbol:'⚖️',numeral:'XI',meaning:'Truth prevails. Cause and effect are perfectly balanced.',keyword:'FAIRNESS · TRUTH · BALANCE'},
+  {name:'The Hanged One',symbol:'🌀',numeral:'XII',meaning:'Surrender to a new perspective. Pause brings revelation.',keyword:'SURRENDER · NEW PERSPECTIVE · WAITING'},
+  {name:'Death',symbol:'🦋',numeral:'XIII',meaning:'Transformation is complete. Release the old to welcome new life.',keyword:'TRANSFORMATION · ENDINGS · REBIRTH'},
+  {name:'Temperance',symbol:'🌟',numeral:'XIV',meaning:'Find the middle path. Balance and flow create miracles.',keyword:'BALANCE · MODERATION · PATIENCE'},
+  {name:'The Devil',symbol:'⛓️',numeral:'XV',meaning:'Examine your attachments. You are freer than you believe.',keyword:'SHADOW · ATTACHMENT · FREEDOM'},
+  {name:'The Tower',symbol:'⚡',numeral:'XVI',meaning:'Sudden breakthrough. What falls was never truly solid.',keyword:'REVELATION · UPHEAVAL · AWAKENING'},
+  {name:'The Star',symbol:'⭐',numeral:'XVII',meaning:'Hope is your compass. Healing and renewal are yours.',keyword:'HOPE · RENEWAL · INSPIRATION'},
+  {name:'The Moon',symbol:'🌕',numeral:'XVIII',meaning:'Navigate the mystery. Your intuition lights the unseen path.',keyword:'ILLUSION · INTUITION · SUBCONSCIOUS'},
+  {name:'The Sun',symbol:'☀️',numeral:'XIX',meaning:'Joy and clarity radiate from you. A golden day unfolds.',keyword:'JOY · VITALITY · SUCCESS'},
+  {name:'Judgement',symbol:'🎺',numeral:'XX',meaning:'Heed the call to rise. A new chapter begins with clarity.',keyword:'AWAKENING · RECKONING · ABSOLUTION'},
+  {name:'The World',symbol:'🌍',numeral:'XXI',meaning:'Completion and wholeness. You have arrived. Celebrate.',keyword:'COMPLETION · INTEGRATION · FULFILMENT'},
+];
+let tarotRevealed = false;
+let todaysTarot = null;
+function getTodaysTarot() {
+  const today = new Date().toDateString();
+  const stored = localStorage.getItem('mirror_tarot');
+  if (stored) {
+    const p = JSON.parse(stored);
+    if (p.date === today) return p;
+  }
+  const card = TAROT_DECK[Math.floor(Math.random()*TAROT_DECK.length)];
+  const reversed = Math.random() < 0.3;
+  const data = { date:today, card, reversed };
+  localStorage.setItem('mirror_tarot', JSON.stringify(data));
+  return data;
+}
+function initTarot() {
+  todaysTarot = getTodaysTarot();
+  document.getElementById('tarotName').textContent = todaysTarot.card.name;
+  document.getElementById('tarotMeaning').textContent = todaysTarot.card.meaning;
+  document.getElementById('tarotKeyword').textContent = todaysTarot.card.keyword;
+  document.getElementById('tarotSymbol').textContent = todaysTarot.card.symbol;
+  document.getElementById('tarotNumeral').textContent = todaysTarot.card.numeral;
+  if (todaysTarot.reversed) {
+    document.getElementById('tarotFace').classList.add('reversed');
+    document.getElementById('tarotReversedTag').style.display = 'block';
+  }
+}
+function flipTarot() {
+  const card = document.getElementById('tarotCard');
+  card.classList.toggle('flipped');
+  tarotRevealed = !tarotRevealed;
+  document.getElementById('tarotHint').textContent = tarotRevealed ? 'tap to hide' : 'tap to reveal';
+}
+initTarot();
+
+// ── TODO ──
+function getTodos() {
+  try { return JSON.parse(localStorage.getItem('mirror_todos')) || []; } catch { return []; }
+}
+function renderTodos() {
+  const todos = getTodos();
+  const el = document.getElementById('todoItems');
+  if (!todos.length) {
+    el.innerHTML = '<div class="todo-item"><span class="todo-gem">◆</span><span class="todo-text">Add your intentions...</span></div>';
+    return;
+  }
+  el.innerHTML = todos.map((t,i) => `
+    <div class="todo-item" onclick="toggleTodo(${i})">
+      <span class="todo-gem">${t.done?'◇':'◆'}</span>
+      <span class="todo-text${t.done?' done':''}">${t.text}</span>
+    </div>`).join('');
+}
+function toggleTodo(i) {
+  const todos = getTodos();
+  todos[i].done = !todos[i].done;
+  localStorage.setItem('mirror_todos', JSON.stringify(todos));
+  renderTodos();
+}
+function openTodoEditor() {
+  const todos = getTodos();
+  document.getElementById('todoEditorList').innerHTML = todos.map((t,i) => `
+    <div class="edit-item">
+      <input value="${t.text.replace(/"/g,'&quot;')}" oninput="updateTodoItem(${i}, this.value)">
+      <button class="edit-item-del" onclick="removeTodoItem(${i})">✕</button>
+    </div>`).join('');
+  document.getElementById('todoModal').classList.add('open');
+}
+let editTodos = [];
+function updateTodoItem(i, val) { editTodos = getTodos(); editTodos[i].text = val; }
+function removeTodoItem(i) {
+  editTodos = getTodos(); editTodos.splice(i,1);
+  localStorage.setItem('mirror_todos', JSON.stringify(editTodos));
+  openTodoEditor();
+}
+function addTodoItem() {
+  const todos = getTodos();
+  todos.push({text:'New intention',done:false});
+  localStorage.setItem('mirror_todos', JSON.stringify(todos));
+  openTodoEditor();
+}
+function closeTodoEditor(save) {
+  if (save) {
+    const inputs = document.querySelectorAll('#todoEditorList .edit-item input');
+    const todos = getTodos();
+    inputs.forEach((inp,i) => { if(todos[i]) todos[i].text = inp.value; });
+    localStorage.setItem('mirror_todos', JSON.stringify(todos));
+  }
+  document.getElementById('todoModal').classList.remove('open');
+  renderTodos();
+}
+renderTodos();
+
+// ── CHRONICLE ──
+function getOutfits() {
+  try { return JSON.parse(localStorage.getItem('mirror_outfits')) || []; } catch { return []; }
+}
+let activeTagFilter = null;
+function openChronicle() {
+  document.getElementById('chronicleModal').classList.add('open');
+  renderChronicle();
+}
+function closeChronicle() {
+  document.getElementById('chronicleModal').classList.remove('open');
+}
+function renderChronicle(filter='', tagFilter=null) {
+  activeTagFilter = tagFilter;
+  let outfits = getOutfits();
+  const count = outfits.length;
+  document.getElementById('chronicleCount').textContent = count ? `${count} enchantment${count===1?'':'s'} recorded` : '';
+  const allTags = [...new Set(outfits.flatMap(o=>o.tags||[]))].slice(0,12);
+  document.getElementById('chronicleTags').innerHTML = allTags.map(t =>
+    `<div class="tag-pill ${tagFilter===t?'active':''}" onclick="filterByTag('${t}')">${t}</div>`).join('');
+  if (filter) outfits = outfits.filter(o => {
+    const s = (o.date||'')+' '+(o.tags||[]).join(' ');
+    return s.toLowerCase().includes(filter.toLowerCase());
+  });
+  if (tagFilter) outfits = outfits.filter(o=>(o.tags||[]).includes(tagFilter));
+  const grid = document.getElementById('chronicleGrid');
+  if (!outfits.length) { grid.innerHTML='<div class="chronicle-empty">No enchantments found yet...</div>'; return; }
+  grid.innerHTML = outfits.map((o,i) => `
+    <div class="polaroid" onclick="openDetail(${i})">
+      <img src="${o.image}" loading="lazy" alt="outfit">
+      <div class="polaroid-date">${o.date||''}</div>
+      <div class="polaroid-tags">${(o.tags||[]).slice(0,2).map(t=>`<span class="polaroid-tag">${t}</span>`).join(' ')}</div>
+    </div>`).join('');
+}
+function filterChronicle() { renderChronicle(document.getElementById('chronicleSearch').value, activeTagFilter); }
+function filterByTag(tag) { activeTagFilter = activeTagFilter===tag?null:tag; renderChronicle(document.getElementById('chronicleSearch').value, activeTagFilter); }
+
+let currentDetailIdx = null;
+function openDetail(i) {
+  const outfits = getOutfits();
+  const o = outfits[i];
+  currentDetailIdx = i;
+  document.getElementById('detailImg').src = o.image;
+  document.getElementById('detailDate').textContent = o.date||'';
+  document.getElementById('detailTags').innerHTML = (o.tags||[]).map(t=>`<div class="detail-tag" onclick="filterByTag('${t}');closeDetail()">${t}</div>`).join('');
+  document.getElementById('detailView').classList.add('open');
+}
+function closeDetail() { document.getElementById('detailView').classList.remove('open'); }
+function deleteCurrentOutfit() {
+  if(currentDetailIdx===null) return;
+  const outfits = getOutfits();
+  outfits.splice(currentDetailIdx,1);
+  localStorage.setItem('mirror_outfits',JSON.stringify(outfits));
+  closeDetail();
+  renderChronicle();
+}
+
+// ── PHOTOBOOTH ──
+let pbStream=null, pbTimerSecs=3, pbCurrentPhoto=null;
+const AI_TAGS=['flowy','structured','monochrome','maximalist','minimal','vintage','editorial','cozy','power dressing','whimsical','dark feminine','soft glam','cottagecore','avant-garde','romantic','bold color','earth tones','jewel tones','layered','statement piece','effortless','polished','androgynous','boho','classic','streetwear','ethereal','theatrical','understated','luxe'];
+function openOutfitLogger() {
+  document.getElementById('outfitModal').classList.add('open');
+  setTimeout(()=>document.getElementById('pbCurtain').classList.add('open'),100);
+  startCamera();
+}
+function closeOutfitLogger() {
+  stopCamera();
+  document.getElementById('outfitModal').classList.remove('open');
+  document.getElementById('pbCurtain').classList.remove('open');
+  resetPhotobooth();
+}
+async function startCamera() {
+  try {
+    pbStream = await navigator.mediaDevices.getUserMedia({video:{facingMode:'user'},audio:false});
+    const video = document.getElementById('pbVideo');
+    video.srcObject = pbStream;
+    await video.play();
+    document.getElementById('captureBtn').disabled = false;
+    document.getElementById('pbHint').textContent = 'Ready when you are';
+  } catch(e) {
+    document.getElementById('pbHint').textContent = 'Camera unavailable — check permissions';
+  }
+}
+function stopCamera() { if(pbStream){pbStream.getTracks().forEach(t=>t.stop());pbStream=null;} }
+function setTimer(btn) {
+  document.querySelectorAll('.timer-opt').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  pbTimerSecs = parseInt(btn.dataset.seconds);
+}
+function startCapture() {
+  document.getElementById('captureBtn').disabled = true;
+  document.getElementById('timerOptions').style.opacity = '0.3';
+  const cd = document.getElementById('pbCountdown');
+  let count = pbTimerSecs;
+  cd.textContent = count; cd.style.opacity = '1';
+  const interval = setInterval(()=>{
+    count--;
+    if(count<=0){clearInterval(interval);cd.style.opacity='0';capturePhoto();}
+    else{cd.textContent=count;}
+  },1000);
+}
+function capturePhoto() {
+  const video=document.getElementById('pbVideo');
+  const cnv=document.getElementById('pbCanvas');
+  const photo=document.getElementById('pbPhoto');
+  cnv.width=video.videoWidth||640; cnv.height=video.videoHeight||480;
+  const c2=cnv.getContext('2d');
+  c2.translate(cnv.width,0); c2.scale(-1,1);
+  c2.drawImage(video,0,0);
+  pbCurrentPhoto=cnv.toDataURL('image/jpeg',0.85);
+  photo.src=pbCurrentPhoto; photo.style.display='block'; video.style.display='none';
+  petalBurst(); readOutfit();
+}
+function petalBurst() {
+  for(let i=0;i<12;i++){
+    const p=document.createElement('div'); p.className='petal';
+    const vf=document.getElementById('pbViewfinder').getBoundingClientRect();
+    p.style.cssText=`left:${vf.left+Math.random()*vf.width}px;top:${vf.top+vf.height/2}px;animation-delay:${Math.random()*0.5}s`;
+    p.textContent=['🌸','🌺','🌹','✨','💫'][Math.floor(Math.random()*5)];
+    document.body.appendChild(p);
+    setTimeout(()=>p.remove(),2000);
+  }
+}
+const readingPhrases=['Consulting the enchanted archives...','Reading the energy of your ensemble...','The mirror sees everything...','Divining your aesthetic signature...','Channeling sartorial wisdom...'];
+const runes=['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛉ','ᛊ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛜ','ᛞ','ᛟ'];
+function readOutfit() {
+  const rd=document.getElementById('pbReading');
+  rd.textContent=readingPhrases[Math.floor(Math.random()*readingPhrases.length)];
+  const vf=document.getElementById('pbViewfinder');
+  for(let i=0;i<6;i++){
+    setTimeout(()=>{
+      const r=document.createElement('div'); r.className='pb-rune';
+      const rect=vf.getBoundingClientRect();
+      r.style.cssText=`left:${rect.left+Math.random()*rect.width}px;top:${rect.top+Math.random()*rect.height}px`;
+      r.textContent=runes[Math.floor(Math.random()*runes.length)];
+      document.body.appendChild(r);
+      setTimeout(()=>r.remove(),3000);
+    },i*300);
+  }
+  setTimeout(()=>{
+    const shuffled=[...AI_TAGS].sort(()=>Math.random()-0.5);
+    const chosen=shuffled.slice(0,Math.floor(Math.random()*3)+3);
+    rd.innerHTML=chosen.map(t=>`<span style="font-family:'Caveat',cursive;font-size:15px;color:var(--rose-gold);margin:0 4px;">${t}</span>`).join('');
+    pbCurrentTags=chosen;
+    document.getElementById('actionBtns').classList.add('visible');
+    document.getElementById('pbHint').textContent='';
+    document.getElementById('captureBtn').style.display='none';
+    document.getElementById('timerOptions').style.display='none';
+  },2500);
+}
+let pbCurrentTags=[];
+function saveOutfit() {
+  if(!pbCurrentPhoto) return;
+  const outfits=getOutfits();
+  const now=new Date();
+  outfits.unshift({
+    date:now.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}),
+    image:pbCurrentPhoto,tags:pbCurrentTags
+  });
+  localStorage.setItem('mirror_outfits',JSON.stringify(outfits));
+  const t=document.getElementById('savedToast'); t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),3000);
+  setTimeout(closeOutfitLogger,1500);
+}
+function retakePhoto() {
+  const video=document.getElementById('pbVideo'); const photo=document.getElementById('pbPhoto');
+  photo.style.display='none'; video.style.display='block';
+  document.getElementById('captureBtn').disabled=false;
+  document.getElementById('captureBtn').style.display='flex';
+  document.getElementById('timerOptions').style.display='flex';
+  document.getElementById('timerOptions').style.opacity='1';
+  document.getElementById('pbReading').textContent='';
+  document.getElementById('actionBtns').classList.remove('visible');
+  pbCurrentPhoto=null; pbCurrentTags=[];
+}
+function resetPhotobooth() {
+  retakePhoto();
+  document.getElementById('pbHint').textContent='Preparing the chamber...';
+  document.getElementById('captureBtn').disabled=true;
+}
+</script>
+</body>
+</html>
