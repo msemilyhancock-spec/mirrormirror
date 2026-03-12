@@ -73,6 +73,16 @@
 
   #sparkles { position: fixed; inset: 0; pointer-events: none; z-index: 2; }
 
+  /* Black vignette — edges dark, center clear */
+  #vignette {
+    position: fixed; inset: 0; pointer-events: none; z-index: 3;
+    background: radial-gradient(ellipse 75% 65% at 50% 50%,
+      transparent 30%,
+      rgba(0,0,0,0.45) 60%,
+      rgba(0,0,0,0.82) 80%,
+      rgba(0,0,0,0.95) 100%);
+  }
+
   /* ══════════════════════════════
      MASTER 16:9 GRID
      3 columns × 3 rows
@@ -904,6 +914,7 @@
 <body>
 
 <canvas id="sparkles"></canvas>
+<div id="vignette"></div>
 
 <!--
   GRID LAYOUT (3×3):
